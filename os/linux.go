@@ -1,6 +1,7 @@
+/*
 //go:build linux
 // +build linux
-
+*/
 package os
 
 import (
@@ -13,15 +14,15 @@ import (
 	"time"
 )
 
-func GetCpuUsage(ctx context.Context) (usage, currentProcessorUsage uint32, err error) {
+func GetCpuUsageL(ctx context.Context) (usage, currentProcessorUsage uint32, err error) {
 	pid := os.Getpid()
 
-	idleStart, totalStart, err := getTotalCpuTime()
+	idleStart, totalStart, err := getTotalCpuTimeL()
 	if err != nil {
 		return 0, 0, err
 	}
 
-	processStart, err := getProcessCpuTime(pid)
+	processStart, err := getProcessCpuTimeL(pid)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -30,12 +31,12 @@ func GetCpuUsage(ctx context.Context) (usage, currentProcessorUsage uint32, err 
 	case <-time.After(getContextTimeout(ctx)):
 	}
 
-	idleEnd, totalEnd, err := getTotalCpuTime()
+	idleEnd, totalEnd, err := getTotalCpuTimeL()
 	if err != nil {
 		return 0, 0, err
 	}
 
-	processEnd, err := getProcessCpuTime(pid)
+	processEnd, err := getProcessCpuTimeL(pid)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -56,7 +57,7 @@ func GetCpuUsage(ctx context.Context) (usage, currentProcessorUsage uint32, err 
 	return usage, currentProcessorUsage, nil
 }
 
-func getTotalCpuTime() (idle uint32, total uint32, err error) {
+func getTotalCpuTimeL() (idle uint32, total uint32, err error) {
 	data, err := ioutil.ReadFile("/proc/stat")
 	if err != nil {
 		return 0, 0, err
@@ -91,7 +92,7 @@ func getTotalCpuTime() (idle uint32, total uint32, err error) {
 	return 0, 0, fmt.Errorf("cpu line not found in /proc/stat")
 }
 
-func getProcessCpuTime(pid int) (uint32, error) {
+func getProcessCpuTimeL(pid int) (uint32, error) {
 	data, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/stat", pid))
 	if err != nil {
 		return 0, err
@@ -112,7 +113,7 @@ func getProcessCpuTime(pid int) (uint32, error) {
 	return uint32(utime + stime), nil
 }
 
-func getContextTimeout(ctx context.Context) time.Duration {
+func getContextTimeoutL(ctx context.Context) time.Duration {
 	deadline, ok := ctx.Deadline()
 	if !ok {
 		return time.Until(deadline)
